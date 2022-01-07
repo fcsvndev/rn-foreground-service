@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.util.Log;
 
 import com.facebook.react.HeadlessJsTaskService;
@@ -51,11 +52,15 @@ public class ForegroundService extends Service {
         return true;
     }
 
+    private PowerManager.WakeLock wakeLock;
+
     @Override
     public void onCreate() {
         //Log.e("ForegroundService", "destroy called");
         running = 0;
         mInstance = this;
+        PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "PeriSecure:MyWakeLock");
     }
 
     @Override
@@ -64,6 +69,7 @@ public class ForegroundService extends Service {
         this.handler.removeCallbacks(this.runnableCode);
         running = 0;
         mInstance = null;
+        wakeLock.release();
     }
 
     @Override
@@ -112,6 +118,7 @@ public class ForegroundService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        wakeLock.acquire(60000);
         String action = intent.getAction();
 
         /**
@@ -231,7 +238,6 @@ public class ForegroundService extends Service {
         return START_REDELIVER_INTENT;
 
     }
-
 
     
 
